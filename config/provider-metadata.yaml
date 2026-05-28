@@ -1,0 +1,85 @@
+name: NitriKx/cloudinary-provisioning
+resources:
+    cloudinaryprovisioning_access_key:
+        subCategory: ""
+        description: Manages a Cloudinary API access key scoped to a product environment.
+        name: cloudinaryprovisioning_access_key
+        title: cloudinaryprovisioning_access_key Resource - terraform-provider-cloudinary-provisioning
+        examples:
+            - name: example
+              manifest: |-
+                {
+                  "product_environment_id": "abc123",
+                  "name": "my-access-key"
+                }
+        argumentDocs:
+            id: (String) The composite identifier product_environment_id/api_key.
+            product_environment_id: (String) The product environment (sub-account) this access key belongs to.
+            name: (String) Human-readable name for the access key.
+            api_key: (String) The generated API key credential.
+            api_secret: (String, Sensitive) The generated API secret credential.
+            enabled: (Boolean) Whether this access key is enabled.
+            created_at: (String) Timestamp when the key was created.
+            updated_at: (String) Timestamp when the key was last updated.
+        importStatements: []
+    cloudinaryprovisioning_custom_policy:
+        subCategory: ""
+        description: Manages a Cloudinary custom permissions policy (Cedar policy).
+        name: cloudinaryprovisioning_custom_policy
+        title: cloudinaryprovisioning_custom_policy Resource - terraform-provider-cloudinary-provisioning
+        examples:
+            - name: example
+              manifest: |-
+                {
+                  "name": "my-policy",
+                  "policy_document": "permit(principal, action, resource);"
+                }
+        argumentDocs:
+            id: (String) The policy ID.
+            name: (String) The policy name.
+            policy_document: (String) Cedar policy statement.
+            scope_type: (String) Scope type (account or product_environment).
+            scope_id: (String) Scope ID (account ID or product environment ID).
+            created_at: (String) Timestamp when the policy was created.
+            updated_at: (String) Timestamp when the policy was last updated.
+        importStatements: []
+    cloudinaryprovisioning_principal_role_assignment:
+        subCategory: ""
+        description: Assigns a Cloudinary role to a principal.
+        name: cloudinaryprovisioning_principal_role_assignment
+        title: cloudinaryprovisioning_principal_role_assignment Resource - terraform-provider-cloudinary-provisioning
+        examples:
+            - name: example
+              manifest: |-
+                {
+                  "principal_type": "access_key",
+                  "principal_id": "my-api-key-id",
+                  "role_id": "role-id",
+                  "scope_type": "product_environment",
+                  "scope_id": "env-id"
+                }
+        argumentDocs:
+            id: (String) Composite identifier.
+            principal_type: (String) Type of principal (access_key, user, user_group, provisioning_key).
+            principal_id: (String) ID of the principal.
+            role_id: (String) The role to assign.
+            scope_type: (String) Scope type (account or product_environment).
+            scope_id: (String) The scope ID.
+        importStatements: []
+    cloudinaryprovisioning_product_environment:
+        subCategory: ""
+        description: Manages a Cloudinary product environment (sub-account).
+        name: cloudinaryprovisioning_product_environment
+        title: cloudinaryprovisioning_product_environment Resource - terraform-provider-cloudinary-provisioning
+        examples:
+            - name: example
+              manifest: |-
+                {
+                  "cloud_name": "my-cloud",
+                  "display_name": "My Cloud"
+                }
+        argumentDocs:
+            id: (String) The product environment ID.
+            cloud_name: (String) The cloud name for this environment.
+            display_name: (String) Human-readable display name.
+        importStatements: []

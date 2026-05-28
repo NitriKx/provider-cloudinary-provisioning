@@ -1,0 +1,6 @@
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-cloudinaryprovisioning
+spec:
+  package: xpkg.crossplane.io/NitriKx/provider-cloudinaryprovisioning:v0.1.0
