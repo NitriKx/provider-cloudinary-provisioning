@@ -1,0 +1,30 @@
+# Platform-team ProviderConfigs — installed once in crossplane-system.
+# Credentials are static secrets created by the platform team.
+---
+apiVersion: cloudinary.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: cloudinary-admin
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: cloudinary-admin-creds
+      key: credentials
+  # credentials Secret format (JSON):
+  # {"cloud_name":"mycloud","api_key":"KEY","api_secret":"SECRET"}
+---
+apiVersion: cloudinaryprovisioning.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: cloudinary-provisioning
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: cloudinary-provisioning-creds
+      key: credentials
+  # credentials Secret format (JSON):
+  # {"account_id":"ACC","api_key":"PROV_KEY","api_secret":"PROV_SECRET"}

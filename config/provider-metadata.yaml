@@ -2,84 +2,133 @@ name: NitriKx/cloudinary-provisioning
 resources:
     cloudinaryprovisioning_access_key:
         subCategory: ""
-        description: Manages a Cloudinary API access key scoped to a product environment.
+        description: Manages an API access key for a Cloudinary product environment. Access keys provide the credentials needed to interact with a product environment's API.
         name: cloudinaryprovisioning_access_key
-        title: cloudinaryprovisioning_access_key Resource - terraform-provider-cloudinary-provisioning
+        title: cloudinaryprovisioning_access_key Resource - cloudinaryprovisioning
         examples:
             - name: example
               manifest: |-
                 {
-                  "product_environment_id": "abc123",
-                  "name": "my-access-key"
+                  "enabled": true,
+                  "name": "my-system-api-key",
+                  "product_environment_id": "${cloudinaryprovisioning_product_environment.example.id}"
                 }
+              references:
+                product_environment_id: cloudinaryprovisioning_product_environment.example.id
+              dependencies:
+                cloudinaryprovisioning_product_environment.example: |-
+                    {
+                      "enabled": true,
+                      "name": "my-project"
+                    }
         argumentDocs:
-            id: (String) The composite identifier product_environment_id/api_key.
-            product_environment_id: (String) The product environment (sub-account) this access key belongs to.
-            name: (String) Human-readable name for the access key.
-            api_key: (String) The generated API key credential.
-            api_secret: (String, Sensitive) The generated API secret credential.
-            enabled: (Boolean) Whether this access key is enabled.
-            created_at: (String) Timestamp when the key was created.
-            updated_at: (String) Timestamp when the key was last updated.
+            api_key: (String) The API key identifier.
+            api_secret: (String, Sensitive) The API secret. Only available immediately after creation. Preserved in state.
+            created_at: (String) The time at which the access key was created (RFC3339).
+            enabled: (Boolean) Whether the access key is enabled.
+            name: (String) A display name for the access key.
+            product_environment_id: (String) The ID of the product environment this access key belongs to. Changing this value forces a new resource to be created.
+            updated_at: (String) The time at which the access key was last updated (RFC3339).
         importStatements: []
     cloudinaryprovisioning_custom_policy:
         subCategory: ""
-        description: Manages a Cloudinary custom permissions policy (Cedar policy).
+        description: Manages a Cloudinary custom permissions policy. Custom policies allow fine-grained access control over Cloudinary resources using Cedar policy language.
         name: cloudinaryprovisioning_custom_policy
-        title: cloudinaryprovisioning_custom_policy Resource - terraform-provider-cloudinary-provisioning
+        title: cloudinaryprovisioning_custom_policy Resource - cloudinaryprovisioning
         examples:
             - name: example
               manifest: |-
                 {
-                  "name": "my-policy",
-                  "policy_document": "permit(principal, action, resource);"
+                  "enabled": true,
+                  "name": "my-project-policy",
+                  "policy_statement": "permit(\n  principal == Cloudinary::APIKey::\"${cloudinaryprovisioning_access_key.example.api_key}\",\n  action in [Cloudinary::Action::\"create\", Cloudinary::Action::\"update\", Cloudinary::Action::\"read\", Cloudinary::Action::\"delete\"],\n  resource is Cloudinary::Asset\n);\n",
+                  "scope_id": "${data.cloudinaryprovisioning_product_environment.example.id}",
+                  "scope_type": "prodenv"
                 }
+              references:
+                scope_id: data.cloudinaryprovisioning_product_environment.example.id
+              dependencies:
+                cloudinaryprovisioning_access_key.example: |-
+                    {
+                      "name": "my-system-api-key",
+                      "product_environment_id": "${data.cloudinaryprovisioning_product_environment.example.id}"
+                    }
         argumentDocs:
-            id: (String) The policy ID.
-            name: (String) The policy name.
-            policy_document: (String) Cedar policy statement.
-            scope_type: (String) Scope type (account or product_environment).
-            scope_id: (String) Scope ID (account ID or product environment ID).
-            created_at: (String) Timestamp when the policy was created.
-            updated_at: (String) Timestamp when the policy was last updated.
+            created_at: (String) The Unix timestamp at which the custom policy was created.
+            description: (String) A human-readable description of the custom policy.
+            enabled: (Boolean) Whether the custom policy is enabled.
+            id: (String) The unique identifier of the custom policy assigned by Cloudinary.
+            name: (String) The display name of the custom policy.
+            policy_statement: (String) The Cedar policy statement string.
+            scope_id: (String) The ID of the product environment this policy applies to. Required when scope_type is "prodenv". Must be omitted or empty when scope_type is "account".
+            scope_type: '(String) The scope of the policy. Must be one of: "account" (applies to the whole account) or "prodenv" (applies to a specific product environment).'
+            updated_at: (String) The Unix timestamp at which the custom policy was last updated.
         importStatements: []
     cloudinaryprovisioning_principal_role_assignment:
         subCategory: ""
-        description: Assigns a Cloudinary role to a principal.
+        description: 'Assigns a role to a principal (user, group, API key, or provisioning key) within a given scope. All attributes are immutable: any change forces resource replacement.'
         name: cloudinaryprovisioning_principal_role_assignment
-        title: cloudinaryprovisioning_principal_role_assignment Resource - terraform-provider-cloudinary-provisioning
+        title: cloudinaryprovisioning_principal_role_assignment Resource - cloudinaryprovisioning
         examples:
-            - name: example
+            - name: provisioning_key_admin
               manifest: |-
                 {
-                  "principal_type": "access_key",
-                  "principal_id": "my-api-key-id",
-                  "role_id": "role-id",
-                  "scope_type": "product_environment",
-                  "scope_id": "env-id"
+                  "principal_id": "${data.cloudinaryprovisioning_current_principal.me.principal_id}",
+                  "principal_type": "${data.cloudinaryprovisioning_current_principal.me.principal_type}",
+                  "role_id": "${data.cloudinaryprovisioning_role.admin.id}",
+                  "scope_id": "${cloudinaryprovisioning_product_environment.dev.id}",
+                  "scope_type": "prodenv"
                 }
+              references:
+                principal_id: data.cloudinaryprovisioning_current_principal.me.principal_id
+                principal_type: data.cloudinaryprovisioning_current_principal.me.principal_type
+                role_id: data.cloudinaryprovisioning_role.admin.id
+                scope_id: cloudinaryprovisioning_product_environment.dev.id
+              dependencies:
+                cloudinaryprovisioning_product_environment.dev: |-
+                    {
+                      "name": "backmarket-dev"
+                    }
         argumentDocs:
-            id: (String) Composite identifier.
-            principal_type: (String) Type of principal (access_key, user, user_group, provisioning_key).
-            principal_id: (String) ID of the principal.
-            role_id: (String) The role to assign.
-            scope_type: (String) Scope type (account or product_environment).
-            scope_id: (String) The scope ID.
+            id: '(String) Composite identifier: {principal_type}/{principal_id}/{role_id}/{scope_type}/{scope_id}.'
+            principal_id: (String) The unique identifier of the principal.
+            principal_type: '(String) The type of principal. Must be one of: "user", "group", "apiKey", "provisioningKey".'
+            role_id: (String) The unique identifier of the role to assign.
+            scope_id: (String) The ID of the product environment. Required when scope_type is "prodenv". Must be omitted when scope_type is "account".
+            scope_type: '(String) The scope level. Must be one of: "account" (whole account) or "prodenv" (specific product environment).'
         importStatements: []
     cloudinaryprovisioning_product_environment:
         subCategory: ""
-        description: Manages a Cloudinary product environment (sub-account).
+        description: Manages a Cloudinary product environment (sub-account). Product environments allow you to segment your Cloudinary usage for different projects or teams.
         name: cloudinaryprovisioning_product_environment
-        title: cloudinaryprovisioning_product_environment Resource - terraform-provider-cloudinary-provisioning
+        title: cloudinaryprovisioning_product_environment Resource - cloudinaryprovisioning
         examples:
             - name: example
               manifest: |-
                 {
-                  "cloud_name": "my-cloud",
-                  "display_name": "My Cloud"
+                  "enabled": true,
+                  "name": "my-project"
+                }
+            - name: named
+              manifest: |-
+                {
+                  "cloud_name": "my-project-cloud",
+                  "enabled": true,
+                  "name": "my-project"
+                }
+            - name: unprotected
+              manifest: |-
+                {
+                  "deletion_protection": false,
+                  "name": "my-ephemeral-project"
                 }
         argumentDocs:
-            id: (String) The product environment ID.
-            cloud_name: (String) The cloud name for this environment.
-            display_name: (String) Human-readable display name.
+            base_sub_account_id: (String) The ID of an existing product environment to copy settings from when creating this one. Changing this value forces a new resource to be created.
+            cloud_name: (String) The Cloudinary cloud name for this product environment. Auto-generated if not provided.
+            created_at: (String) The time at which the product environment was created (RFC3339).
+            deletion_protection: (Boolean) Whether to prevent accidental deletion of this product environment. Defaults to true. When true, terraform destroy will fail with an error. To destroy the resource, set this to false and run terraform apply first.
+            enabled: (Boolean) Whether the product environment is enabled.
+            id: (String) The unique identifier of the product environment assigned by Cloudinary.
+            name: (String) The display name of the product environment.
+            updated_at: (String) The time at which the product environment was last updated (RFC3339).
         importStatements: []

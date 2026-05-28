@@ -4,18 +4,18 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.20.1
-  name: resources.null.cloudinaryprovisioning.crossplane.io
+  name: principalroleassignments.iam.cloudinaryprovisioning.crossplane.io
 spec:
-  group: null.cloudinaryprovisioning.crossplane.io
+  group: iam.cloudinaryprovisioning.crossplane.io
   names:
     categories:
     - crossplane
     - managed
     - cloudinaryprovisioning
-    kind: Resource
-    listKind: ResourceList
-    plural: resources
-    singular: resource
+    kind: PrincipalRoleAssignment
+    listKind: PrincipalRoleAssignmentList
+    plural: principalroleassignments
+    singular: principalroleassignment
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -34,10 +34,10 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Resource is the Schema for the Resources API. The null_resource
-          resource implements the standard resource lifecycle but takes no further
-          action.hashicorp. The triggers argument allows specifying an arbitrary set
-          of values that, when changed, will cause the resource to be replaced.
+        description: 'PrincipalRoleAssignment is the Schema for the PrincipalRoleAssignments
+          API. Assigns a role to a principal (user, group, API key, or provisioning
+          key) within a given scope. All attributes are immutable: any change forces
+          resource replacement.'
         properties:
           apiVersion:
             description: |-
@@ -57,7 +57,8 @@ spec:
           metadata:
             type: object
           spec:
-            description: ResourceSpec defines the desired state of Resource
+            description: PrincipalRoleAssignmentSpec defines the desired state of
+              PrincipalRoleAssignment
             properties:
               deletionPolicy:
                 default: Delete
@@ -75,14 +76,31 @@ spec:
                 type: string
               forProvider:
                 properties:
-                  triggers:
-                    additionalProperties:
-                      type: string
+                  principalId:
                     description: |-
-                      running any associated provisioners.
-                      A map of arbitrary strings that, when changed, will force the null resource to be replaced, re-running any associated provisioners.
-                    type: object
-                    x-kubernetes-map-type: granular
+                      (String) The unique identifier of the principal.
+                      The unique identifier of the principal.
+                    type: string
+                  principalType:
+                    description: |-
+                      (String) The type of principal. Must be one of: "user", "group", "apiKey", "provisioningKey".
+                      The type of principal. Must be one of: "user", "group", "apiKey", "provisioningKey".
+                    type: string
+                  roleId:
+                    description: |-
+                      (String) The unique identifier of the role to assign.
+                      The unique identifier of the role to assign.
+                    type: string
+                  scopeId:
+                    description: |-
+                      (String) The ID of the product environment. Required when scope_type is "prodenv". Must be omitted when scope_type is "account".
+                      The ID of the product environment. Required when scope_type is "prodenv". Must be omitted when scope_type is "account".
+                    type: string
+                  scopeType:
+                    description: |-
+                      (String) The scope level. Must be one of: "account" (whole account) or "prodenv" (specific product environment).
+                      The scope level. Must be one of: "account" (whole account) or "prodenv" (specific product environment).
+                    type: string
                 type: object
               initProvider:
                 description: |-
@@ -97,14 +115,31 @@ spec:
                   for example because of an external controller is managing them, like an
                   autoscaler.
                 properties:
-                  triggers:
-                    additionalProperties:
-                      type: string
+                  principalId:
                     description: |-
-                      running any associated provisioners.
-                      A map of arbitrary strings that, when changed, will force the null resource to be replaced, re-running any associated provisioners.
-                    type: object
-                    x-kubernetes-map-type: granular
+                      (String) The unique identifier of the principal.
+                      The unique identifier of the principal.
+                    type: string
+                  principalType:
+                    description: |-
+                      (String) The type of principal. Must be one of: "user", "group", "apiKey", "provisioningKey".
+                      The type of principal. Must be one of: "user", "group", "apiKey", "provisioningKey".
+                    type: string
+                  roleId:
+                    description: |-
+                      (String) The unique identifier of the role to assign.
+                      The unique identifier of the role to assign.
+                    type: string
+                  scopeId:
+                    description: |-
+                      (String) The ID of the product environment. Required when scope_type is "prodenv". Must be omitted when scope_type is "account".
+                      The ID of the product environment. Required when scope_type is "prodenv". Must be omitted when scope_type is "account".
+                    type: string
+                  scopeType:
+                    description: |-
+                      (String) The scope level. Must be one of: "account" (whole account) or "prodenv" (specific product environment).
+                      The scope level. Must be one of: "account" (whole account) or "prodenv" (specific product environment).
+                    type: string
                 type: object
               managementPolicies:
                 default:
@@ -192,23 +227,57 @@ spec:
             required:
             - forProvider
             type: object
+            x-kubernetes-validations:
+            - message: spec.forProvider.principalId is a required parameter
+              rule: '!(''*'' in self.managementPolicies || ''Create'' in self.managementPolicies
+                || ''Update'' in self.managementPolicies) || has(self.forProvider.principalId)
+                || (has(self.initProvider) && has(self.initProvider.principalId))'
+            - message: spec.forProvider.principalType is a required parameter
+              rule: '!(''*'' in self.managementPolicies || ''Create'' in self.managementPolicies
+                || ''Update'' in self.managementPolicies) || has(self.forProvider.principalType)
+                || (has(self.initProvider) && has(self.initProvider.principalType))'
+            - message: spec.forProvider.roleId is a required parameter
+              rule: '!(''*'' in self.managementPolicies || ''Create'' in self.managementPolicies
+                || ''Update'' in self.managementPolicies) || has(self.forProvider.roleId)
+                || (has(self.initProvider) && has(self.initProvider.roleId))'
+            - message: spec.forProvider.scopeType is a required parameter
+              rule: '!(''*'' in self.managementPolicies || ''Create'' in self.managementPolicies
+                || ''Update'' in self.managementPolicies) || has(self.forProvider.scopeType)
+                || (has(self.initProvider) && has(self.initProvider.scopeType))'
           status:
-            description: ResourceStatus defines the observed state of Resource.
+            description: PrincipalRoleAssignmentStatus defines the observed state
+              of PrincipalRoleAssignment.
             properties:
               atProvider:
                 properties:
                   id:
-                    description: (String) This is set to a random value at create
-                      time.
+                    description: '(String) Composite identifier: {principal_type}/{principal_id}/{role_id}/{scope_type}/{scope_id}.'
                     type: string
-                  triggers:
-                    additionalProperties:
-                      type: string
+                  principalId:
                     description: |-
-                      running any associated provisioners.
-                      A map of arbitrary strings that, when changed, will force the null resource to be replaced, re-running any associated provisioners.
-                    type: object
-                    x-kubernetes-map-type: granular
+                      (String) The unique identifier of the principal.
+                      The unique identifier of the principal.
+                    type: string
+                  principalType:
+                    description: |-
+                      (String) The type of principal. Must be one of: "user", "group", "apiKey", "provisioningKey".
+                      The type of principal. Must be one of: "user", "group", "apiKey", "provisioningKey".
+                    type: string
+                  roleId:
+                    description: |-
+                      (String) The unique identifier of the role to assign.
+                      The unique identifier of the role to assign.
+                    type: string
+                  scopeId:
+                    description: |-
+                      (String) The ID of the product environment. Required when scope_type is "prodenv". Must be omitted when scope_type is "account".
+                      The ID of the product environment. Required when scope_type is "prodenv". Must be omitted when scope_type is "account".
+                    type: string
+                  scopeType:
+                    description: |-
+                      (String) The scope level. Must be one of: "account" (whole account) or "prodenv" (specific product environment).
+                      The scope level. Must be one of: "account" (whole account) or "prodenv" (specific product environment).
+                    type: string
                 type: object
               conditions:
                 description: Conditions of the resource.

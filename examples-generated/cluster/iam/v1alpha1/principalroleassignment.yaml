@@ -1,0 +1,15 @@
+apiVersion: iam.cloudinaryprovisioning.crossplane.io/v1alpha1
+kind: PrincipalRoleAssignment
+metadata:
+  annotations:
+    meta.upbound.io/example-id: iam/v1alpha1/principalroleassignment
+  labels:
+    testing.upbound.io/example-name: provisioning_key_admin
+  name: provisioning-key-admin
+spec:
+  forProvider:
+    principalId: ${data.cloudinaryprovisioning_current_principal.me.principal_id}
+    principalType: ${data.cloudinaryprovisioning_current_principal.me.principal_type}
+    roleId: ${data.cloudinaryprovisioning_role.admin.id}
+    scopeId: ${cloudinaryprovisioning_product_environment.dev.id}
+    scopeType: prodenv

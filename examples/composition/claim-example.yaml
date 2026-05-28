@@ -1,0 +1,15 @@
+# Example: a platform user claims a CloudinaryWorkspace to get a folder,
+# scoped policy, and upload-SDK credentials Secret in their namespace.
+apiVersion: cloudinary.backmarket.io/v1alpha1
+kind: CloudinaryWorkspace
+metadata:
+  name: my-team-uploads
+  namespace: my-app-ns
+spec:
+  compositionRef:
+    name: cloudinary-workspace
+  folderPath: teams/my-team/uploads
+  namespace: my-app-ns
+  productEnvironmentId: "prod-env-id-here"
+  writeConnectionSecretToRef:
+    name: my-team-cloudinary

@@ -1,0 +1,37 @@
+apiVersion: policy.cloudinaryprovisioning.m.crossplane.io/v1alpha1
+kind: CustomPolicy
+metadata:
+  annotations:
+    meta.upbound.io/example-id: policy/v1alpha1/custompolicy
+  labels:
+    testing.upbound.io/example-name: example
+  name: example
+  namespace: crossplane-system
+spec:
+  forProvider:
+    enabled: true
+    name: my-project-policy
+    policyStatement: |
+      permit(
+        principal == Cloudinary::APIKey::"${cloudinaryprovisioning_access_key.example.api_key}",
+        action in [Cloudinary::Action::"create", Cloudinary::Action::"update", Cloudinary::Action::"read", Cloudinary::Action::"delete"],
+        resource is Cloudinary::Asset
+      );
+    scopeId: ${data.cloudinaryprovisioning_product_environment.example.id}
+    scopeType: prodenv
+
+---
+
+apiVersion: accesskey.cloudinaryprovisioning.m.crossplane.io/v1alpha1
+kind: AccessKey
+metadata:
+  annotations:
+    meta.upbound.io/example-id: policy/v1alpha1/custompolicy
+  labels:
+    testing.upbound.io/example-name: example
+  name: example
+  namespace: crossplane-system
+spec:
+  forProvider:
+    name: my-system-api-key
+    productEnvironmentId: ${data.cloudinaryprovisioning_product_environment.example.id}

@@ -1,0 +1,45 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xcloudinaryworkspaces.cloudinary.backmarket.io
+spec:
+  group: cloudinary.backmarket.io
+  names:
+    kind: XCloudinaryWorkspace
+    plural: xcloudinaryworkspaces
+  claimNames:
+    kind: CloudinaryWorkspace
+    plural: cloudinaryworkspaces
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [folderPath, namespace, productEnvironmentId]
+              properties:
+                folderPath:
+                  type: string
+                  description: "The Cloudinary folder path to create (e.g. teams/my-team/uploads)."
+                namespace:
+                  type: string
+                  description: "The namespace where the upload-SDK credential Secret will be written."
+                productEnvironmentId:
+                  type: string
+                  description: "The Cloudinary product environment ID for the access key and policy."
+            status:
+              type: object
+              properties:
+                folderExternalId:
+                  type: string
+                  description: "The external_id of the created Cloudinary folder."
+                accessKeyId:
+                  type: string
+                  description: "The api_key of the created access key."
+                policyId:
+                  type: string
+                  description: "The ID of the created custom policy."

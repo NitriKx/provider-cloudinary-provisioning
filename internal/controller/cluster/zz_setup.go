@@ -9,6 +9,9 @@ import (
 
 	"github.com/crossplane/upjet/v2/pkg/controller"
 
+	accesskey "github.com/NitriKx/provider-cloudinaryprovisioning/internal/controller/cluster/accesskey/accesskey"
+	principalroleassignment "github.com/NitriKx/provider-cloudinaryprovisioning/internal/controller/cluster/iam/principalroleassignment"
+	custompolicy "github.com/NitriKx/provider-cloudinaryprovisioning/internal/controller/cluster/policy/custompolicy"
 	providerconfig "github.com/NitriKx/provider-cloudinaryprovisioning/internal/controller/cluster/providerconfig"
 )
 
@@ -16,6 +19,9 @@ import (
 // the supplied manager.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+		accesskey.Setup,
+		principalroleassignment.Setup,
+		custompolicy.Setup,
 		providerconfig.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
@@ -29,6 +35,9 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 // the supplied manager gated.
 func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
+		accesskey.SetupGated,
+		principalroleassignment.SetupGated,
+		custompolicy.SetupGated,
 		providerconfig.SetupGated,
 	} {
 		if err := setup(mgr, o); err != nil {

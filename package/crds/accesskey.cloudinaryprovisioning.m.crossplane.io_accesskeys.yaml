@@ -4,18 +4,18 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.20.1
-  name: resources.null.cloudinaryprovisioning.m.crossplane.io
+  name: accesskeys.accesskey.cloudinaryprovisioning.m.crossplane.io
 spec:
-  group: null.cloudinaryprovisioning.m.crossplane.io
+  group: accesskey.cloudinaryprovisioning.m.crossplane.io
   names:
     categories:
     - crossplane
     - managed
     - cloudinaryprovisioning
-    kind: Resource
-    listKind: ResourceList
-    plural: resources
-    singular: resource
+    kind: AccessKey
+    listKind: AccessKeyList
+    plural: accesskeys
+    singular: accesskey
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -34,10 +34,9 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Resource is the Schema for the Resources API. The null_resource
-          resource implements the standard resource lifecycle but takes no further
-          action.hashicorp. The triggers argument allows specifying an arbitrary set
-          of values that, when changed, will cause the resource to be replaced.
+        description: AccessKey is the Schema for the AccessKeys API. Manages an API
+          access key for a Cloudinary product environment. Access keys provide the
+          credentials needed to interact with a product environment's API.
         properties:
           apiVersion:
             description: |-
@@ -57,18 +56,25 @@ spec:
           metadata:
             type: object
           spec:
-            description: ResourceSpec defines the desired state of Resource
+            description: AccessKeySpec defines the desired state of AccessKey
             properties:
               forProvider:
                 properties:
-                  triggers:
-                    additionalProperties:
-                      type: string
+                  enabled:
                     description: |-
-                      running any associated provisioners.
-                      A map of arbitrary strings that, when changed, will force the null resource to be replaced, re-running any associated provisioners.
-                    type: object
-                    x-kubernetes-map-type: granular
+                      (Boolean) Whether the access key is enabled.
+                      Whether the access key is enabled.
+                    type: boolean
+                  name:
+                    description: |-
+                      (String) A display name for the access key.
+                      A display name for the access key.
+                    type: string
+                  productEnvironmentId:
+                    description: |-
+                      (String) The ID of the product environment this access key belongs to. Changing this value forces a new resource to be created.
+                      The ID of the product environment this access key belongs to. Changing this value forces a new resource to be created.
+                    type: string
                 type: object
               initProvider:
                 description: |-
@@ -83,14 +89,21 @@ spec:
                   for example because of an external controller is managing them, like an
                   autoscaler.
                 properties:
-                  triggers:
-                    additionalProperties:
-                      type: string
+                  enabled:
                     description: |-
-                      running any associated provisioners.
-                      A map of arbitrary strings that, when changed, will force the null resource to be replaced, re-running any associated provisioners.
-                    type: object
-                    x-kubernetes-map-type: granular
+                      (Boolean) Whether the access key is enabled.
+                      Whether the access key is enabled.
+                    type: boolean
+                  name:
+                    description: |-
+                      (String) A display name for the access key.
+                      A display name for the access key.
+                    type: string
+                  productEnvironmentId:
+                    description: |-
+                      (String) The ID of the product environment this access key belongs to. Changing this value forces a new resource to be created.
+                      The ID of the product environment this access key belongs to. Changing this value forces a new resource to be created.
+                    type: string
                 type: object
               managementPolicies:
                 default:
@@ -150,23 +163,48 @@ spec:
             required:
             - forProvider
             type: object
+            x-kubernetes-validations:
+            - message: spec.forProvider.productEnvironmentId is a required parameter
+              rule: '!(''*'' in self.managementPolicies || ''Create'' in self.managementPolicies
+                || ''Update'' in self.managementPolicies) || has(self.forProvider.productEnvironmentId)
+                || (has(self.initProvider) && has(self.initProvider.productEnvironmentId))'
           status:
-            description: ResourceStatus defines the observed state of Resource.
+            description: AccessKeyStatus defines the observed state of AccessKey.
             properties:
               atProvider:
                 properties:
-                  id:
-                    description: (String) This is set to a random value at create
-                      time.
-                    type: string
-                  triggers:
-                    additionalProperties:
-                      type: string
+                  apiKey:
                     description: |-
-                      running any associated provisioners.
-                      A map of arbitrary strings that, when changed, will force the null resource to be replaced, re-running any associated provisioners.
-                    type: object
-                    x-kubernetes-map-type: granular
+                      (String) The API key identifier.
+                      The API key identifier.
+                    type: string
+                  createdAt:
+                    description: |-
+                      (String) The time at which the access key was created (RFC3339).
+                      The time at which the access key was created (RFC3339).
+                    type: string
+                  enabled:
+                    description: |-
+                      (Boolean) Whether the access key is enabled.
+                      Whether the access key is enabled.
+                    type: boolean
+                  id:
+                    type: string
+                  name:
+                    description: |-
+                      (String) A display name for the access key.
+                      A display name for the access key.
+                    type: string
+                  productEnvironmentId:
+                    description: |-
+                      (String) The ID of the product environment this access key belongs to. Changing this value forces a new resource to be created.
+                      The ID of the product environment this access key belongs to. Changing this value forces a new resource to be created.
+                    type: string
+                  updatedAt:
+                    description: |-
+                      (String) The time at which the access key was last updated (RFC3339).
+                      The time at which the access key was last updated (RFC3339).
+                    type: string
                 type: object
               conditions:
                 description: Conditions of the resource.

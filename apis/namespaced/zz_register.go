@@ -10,6 +10,9 @@ package namespaced
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
+	v1alpha1 "github.com/NitriKx/provider-cloudinaryprovisioning/apis/namespaced/accesskey/v1alpha1"
+	v1alpha1iam "github.com/NitriKx/provider-cloudinaryprovisioning/apis/namespaced/iam/v1alpha1"
+	v1alpha1policy "github.com/NitriKx/provider-cloudinaryprovisioning/apis/namespaced/policy/v1alpha1"
 	v1alpha1namespaced "github.com/NitriKx/provider-cloudinaryprovisioning/apis/namespaced/v1alpha1"
 	v1beta1 "github.com/NitriKx/provider-cloudinaryprovisioning/apis/namespaced/v1beta1"
 )
@@ -17,6 +20,9 @@ import (
 func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
 	AddToSchemes = append(AddToSchemes,
+		v1alpha1.SchemeBuilder.AddToScheme,
+		v1alpha1iam.SchemeBuilder.AddToScheme,
+		v1alpha1policy.SchemeBuilder.AddToScheme,
 		v1alpha1namespaced.SchemeBuilder.AddToScheme,
 		v1beta1.SchemeBuilder.AddToScheme,
 	)

@@ -10,6 +10,9 @@ package cluster
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
+	v1alpha1 "github.com/NitriKx/provider-cloudinaryprovisioning/apis/cluster/accesskey/v1alpha1"
+	v1alpha1iam "github.com/NitriKx/provider-cloudinaryprovisioning/apis/cluster/iam/v1alpha1"
+	v1alpha1policy "github.com/NitriKx/provider-cloudinaryprovisioning/apis/cluster/policy/v1alpha1"
 	v1alpha1cluster "github.com/NitriKx/provider-cloudinaryprovisioning/apis/cluster/v1alpha1"
 	v1beta1 "github.com/NitriKx/provider-cloudinaryprovisioning/apis/cluster/v1beta1"
 )
@@ -17,6 +20,9 @@ import (
 func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
 	AddToSchemes = append(AddToSchemes,
+		v1alpha1.SchemeBuilder.AddToScheme,
+		v1alpha1iam.SchemeBuilder.AddToScheme,
+		v1alpha1policy.SchemeBuilder.AddToScheme,
 		v1alpha1cluster.SchemeBuilder.AddToScheme,
 		v1beta1.SchemeBuilder.AddToScheme,
 	)

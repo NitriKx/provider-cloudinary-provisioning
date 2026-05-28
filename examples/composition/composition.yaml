@@ -1,0 +1,127 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: cloudinary-workspace
+  labels:
+    crossplane.io/xrd: xcloudinaryworkspaces.cloudinary.backmarket.io
+spec:
+  compositeTypeRef:
+    apiVersion: cloudinary.backmarket.io/v1alpha1
+    kind: XCloudinaryWorkspace
+  mode: Pipeline
+  pipeline:
+    - step: create-folder
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: folder
+            base:
+              apiVersion: folder.cloudinary.crossplane.io/v1alpha1
+              kind: Folder
+              spec:
+                forProvider: {}
+                providerConfigRef:
+                  name: cloudinary-admin
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.folderPath
+                toFieldPath: spec.forProvider.path
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.externalId
+                toFieldPath: status.folderExternalId
+                policy:
+                  fromFieldPath: Optional
+
+    - step: create-access-key
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: access-key
+            base:
+              apiVersion: accesskey.cloudinaryprovisioning.crossplane.io/v1alpha1
+              kind: AccessKey
+              spec:
+                forProvider:
+                  enabled: true
+                  name: "workspace-key"
+                writeConnectionSecretToRef:
+                  namespace: ""
+                  name: ""
+                providerConfigRef:
+                  name: cloudinary-provisioning
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.productEnvironmentId
+                toFieldPath: spec.forProvider.productEnvironmentId
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.namespace
+                toFieldPath: spec.writeConnectionSecretToRef.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.name
+                toFieldPath: spec.writeConnectionSecretToRef.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-cloudinary"
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.apiKey
+                toFieldPath: status.accessKeyId
+                policy:
+                  fromFieldPath: Optional
+
+    - step: create-custom-policy
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: custom-policy
+            base:
+              apiVersion: policy.cloudinaryprovisioning.crossplane.io/v1alpha1
+              kind: CustomPolicy
+              spec:
+                forProvider:
+                  enabled: true
+                  scopeType: prodenv
+                providerConfigRef:
+                  name: cloudinary-provisioning
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.productEnvironmentId
+                toFieldPath: spec.forProvider.scopeId
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.folderPath
+                toFieldPath: spec.forProvider.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "workspace-policy-%s"
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: status.accessKeyId
+                    - fromFieldPath: status.folderExternalId
+                  strategy: string
+                  string:
+                    fmt: |
+                      permit(
+                        principal == Cloudinary::APIKey::"%s",
+                        action in [Cloudinary::Action::"upload", Cloudinary::Action::"read"],
+                        resource is Cloudinary::Asset
+                          when { resource.folder_external_id == "%s" }
+                      );
+                toFieldPath: spec.forProvider.policyStatement
+                policy:
+                  fromFieldPath: Optional
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.id
+                toFieldPath: status.policyId
+                policy:
+                  fromFieldPath: Optional
