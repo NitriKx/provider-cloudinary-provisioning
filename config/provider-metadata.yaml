@@ -1,4 +1,4 @@
-name: NitriKx/cloudinary-provisioning
+name: nitrikx/cloudinary-provisioning
 resources:
     cloudinaryprovisioning_access_key:
         subCategory: ""
