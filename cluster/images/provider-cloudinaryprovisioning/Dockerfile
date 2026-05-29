@@ -1,49 +1,42 @@
+# Stage 1: Build the wrapped Terraform provider binary from source.
+# This runs on the build platform but cross-compiles for the target.
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS tf-provider-builder
+ARG TARGETARCH
+ARG TARGETOS
+
+RUN apk --no-cache add git
+
+# Cross-compile the TF provider binary.
+# When GOARCH != GOHOSTARCH, go install places the binary in
+# $GOPATH/bin/${GOOS}_${GOARCH}/ rather than $GOPATH/bin/.
+RUN CGO_ENABLED=0 GOARCH=${TARGETARCH} GOOS=${TARGETOS} \
+    go install github.com/NitriKx/terraform-provider-cloudinary-provisioning@main && \
+    ( mv /go/bin/${TARGETOS}_${TARGETARCH}/terraform-provider-cloudinary-provisioning /tf-provider 2>/dev/null || \
+      mv /go/bin/terraform-provider-cloudinary-provisioning /tf-provider )
+
+# Stage 2: Runtime image (native gRPC mode — no terraform CLI required).
 FROM alpine:3.23.4
 RUN apk --no-cache add ca-certificates bash
 
 ARG TARGETOS
 ARG TARGETARCH
-
-ADD "bin/${TARGETOS}_${TARGETARCH}/provider" /usr/local/bin/provider
+ARG TERRAFORM_NATIVE_PROVIDER_BINARY
+ARG TERRAFORM_PROVIDER_VERSION
 
 ENV USER_ID=65532
 
-# Setup Terraform environment
+# Crossplane provider controller binary
+ADD "bin/${TARGETOS}_${TARGETARCH}/provider" /usr/local/bin/provider
 
-## Provider-dependent configuration
-ARG TERRAFORM_VERSION
-ARG TERRAFORM_PROVIDER_SOURCE
-ARG TERRAFORM_PROVIDER_VERSION
-ARG TERRAFORM_PROVIDER_DOWNLOAD_NAME
-ARG TERRAFORM_NATIVE_PROVIDER_BINARY
-ARG TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX
+# Wrapped TF provider binary — the controller launches it as a native gRPC subprocess.
+# TERRAFORM_NATIVE_PROVIDER_PATH tells the controller where to find it at runtime.
+COPY --from=tf-provider-builder /tf-provider /usr/local/bin/${TERRAFORM_NATIVE_PROVIDER_BINARY}
 
-## End of - Provider-dependent configuration
-
-ENV PLUGIN_DIR=/terraform/provider-mirror/registry.terraform.io/${TERRAFORM_PROVIDER_SOURCE}/${TERRAFORM_PROVIDER_VERSION}/${TARGETOS}_${TARGETARCH}
-ENV TF_CLI_CONFIG_FILE=/terraform/.terraformrc
-ENV TF_FORK=0
-
-RUN mkdir -p ${PLUGIN_DIR}
-
-ADD https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_${TARGETOS}_${TARGETARCH}.zip /tmp
-ADD ${TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX}/${TERRAFORM_PROVIDER_DOWNLOAD_NAME}_${TERRAFORM_PROVIDER_VERSION}_${TARGETOS}_${TARGETARCH}.zip /tmp
-ADD terraformrc.hcl ${TF_CLI_CONFIG_FILE}
-
-RUN unzip /tmp/terraform_${TERRAFORM_VERSION}_${TARGETOS}_${TARGETARCH}.zip -d /usr/local/bin \
-  && chmod +x /usr/local/bin/terraform \
-  && rm /tmp/terraform_${TERRAFORM_VERSION}_${TARGETOS}_${TARGETARCH}.zip \
-  && unzip /tmp/${TERRAFORM_PROVIDER_DOWNLOAD_NAME}_${TERRAFORM_PROVIDER_VERSION}_${TARGETOS}_${TARGETARCH}.zip -d ${PLUGIN_DIR} \
-  && chmod +x ${PLUGIN_DIR}/* \
-  && rm /tmp/${TERRAFORM_PROVIDER_DOWNLOAD_NAME}_${TERRAFORM_PROVIDER_VERSION}_${TARGETOS}_${TARGETARCH}.zip \
-  && chown -R ${USER_ID}:${USER_ID} /terraform
-# End of - Setup Terraform environment
-
-# Provider controller needs these environment variable at runtime
-ENV TERRAFORM_VERSION=${TERRAFORM_VERSION}
-ENV TERRAFORM_PROVIDER_SOURCE=${TERRAFORM_PROVIDER_SOURCE}
+ENV TERRAFORM_NATIVE_PROVIDER_PATH=/usr/local/bin/${TERRAFORM_NATIVE_PROVIDER_BINARY}
 ENV TERRAFORM_PROVIDER_VERSION=${TERRAFORM_PROVIDER_VERSION}
-ENV TERRAFORM_NATIVE_PROVIDER_PATH=${PLUGIN_DIR}/${TERRAFORM_NATIVE_PROVIDER_BINARY}
+
+RUN chown -R ${USER_ID}:${USER_ID} /usr/local/bin/provider \
+  && chown -R ${USER_ID}:${USER_ID} /usr/local/bin/${TERRAFORM_NATIVE_PROVIDER_BINARY}
 
 USER ${USER_ID}
 EXPOSE 8080

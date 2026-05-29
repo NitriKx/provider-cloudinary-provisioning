@@ -7,11 +7,11 @@ import (
 	ujconfig "github.com/crossplane/upjet/v2/pkg/config"
 
 	accesskeyCluster "github.com/NitriKx/provider-cloudinaryprovisioning/config/cluster/accesskey"
-	policyCluster "github.com/NitriKx/provider-cloudinaryprovisioning/config/cluster/policy"
 	iamCluster "github.com/NitriKx/provider-cloudinaryprovisioning/config/cluster/iam"
+	policyCluster "github.com/NitriKx/provider-cloudinaryprovisioning/config/cluster/policy"
 	accesskeyNamespaced "github.com/NitriKx/provider-cloudinaryprovisioning/config/namespaced/accesskey"
-	policyNamespaced "github.com/NitriKx/provider-cloudinaryprovisioning/config/namespaced/policy"
 	iamNamespaced "github.com/NitriKx/provider-cloudinaryprovisioning/config/namespaced/iam"
+	policyNamespaced "github.com/NitriKx/provider-cloudinaryprovisioning/config/namespaced/policy"
 )
 
 const (

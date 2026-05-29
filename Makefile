@@ -122,12 +122,20 @@ $(TERRAFORM): check-terraform-version
 	@$(OK) installing terraform $(HOSTOS)-$(HOSTARCH)
 
 # ----------------------------------------------------------
-# generate: remote flow
-#   Downloads the TF provider binary from GitHub Releases, generates schema.json
-#   using terraform dev_overrides (no registry lookup), then runs the Upjet generator.
-#   Requires a published GitHub Release at v$(TERRAFORM_PROVIDER_VERSION).
+# generate: default target — re-runs the Upjet code generator against the
+#   committed config/schema.json. This is what CI (check-diff) calls.
+#   Does NOT re-fetch the schema from any external source.
 # ----------------------------------------------------------
-generate: generate-schema generate-code
+generate: generate-code
+
+# ----------------------------------------------------------
+# generate-remote: downloads the TF provider binary from GitHub Releases,
+#   regenerates config/schema.json, then runs the Upjet generator.
+#   Requires a published GitHub Release at v$(TERRAFORM_PROVIDER_VERSION).
+#   Use this when cutting a new Crossplane provider release that tracks a
+#   new TF provider release.
+# ----------------------------------------------------------
+generate-remote: generate-schema generate-code
 
 generate-schema: $(TERRAFORM) pull-docs
 	@$(INFO) downloading $(TERRAFORM_PROVIDER_DOWNLOAD_NAME) v$(TERRAFORM_PROVIDER_VERSION) from GitHub Releases
@@ -175,7 +183,8 @@ generate-code:
 
 pull-docs:
 	@mkdir -p "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)/docs"
-	@if [ ! -d "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)/$(TERRAFORM_DOCS_PATH)" ]; then \
+	@if [ ! -d "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)/$(TERRAFORM_DOCS_PATH)" ] && \
+	   [ -d "../terraform-provider-cloudinary-provisioning/$(TERRAFORM_DOCS_PATH)" ]; then \
 		cp -r "../terraform-provider-cloudinary-provisioning/$(TERRAFORM_DOCS_PATH)" "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)/$(TERRAFORM_DOCS_PATH)"; \
 	fi
 
@@ -184,7 +193,7 @@ pull-docs:
 # since schema.json is committed and only regenerated explicitly.
 generate.init: pull-docs
 
-.PHONY: generate generate-schema generate-local generate-schema-local generate-code pull-docs check-terraform-version
+.PHONY: generate generate-remote generate-schema generate-local generate-schema-local generate-code pull-docs check-terraform-version
 # ====================================================================================
 # Targets
 
