@@ -149,14 +149,9 @@ func main() {
 	metrics.Registry.MustRegister(metricRecorder)
 	metrics.Registry.MustRegister(stateMetrics)
 
-	// nativeScheduler runs the TF provider binary as a shared gRPC subprocess
-	// (no terraform CLI required). TERRAFORM_NATIVE_PROVIDER_PATH must point
-	// to the terraform-provider-cloudinary-provisioning binary in the container image.
-	nativeScheduler := terraform.NewSharedProviderScheduler(log, 600,
-		terraform.WithSharedProviderOptions(
-			terraform.WithNativeProviderPath(os.Getenv("TERRAFORM_NATIVE_PROVIDER_PATH")),
-			terraform.WithNativeProviderLogger(log),
-		))
+	// NoOpProviderScheduler lets terraform start the provider binary directly
+	// from the filesystem mirror embedded in the container image.
+	nativeScheduler := terraform.NewNoOpProviderScheduler()
 
 	clusterOpts := tjcontroller.Options{
 		Options: xpcontroller.Options{
