@@ -1,31 +1,64 @@
 name: Publish Provider Package
 
 on:
-  # Auto-publish when a version tag is pushed (e.g. via tag.yaml workflow)
   push:
     tags:
       - 'v*'
   workflow_dispatch:
     inputs:
       version:
-        description: "Version string to use while publishing the package (e.g. v1.0.0-alpha.1)"
+        description: "Version tag to publish (e.g. v0.1.0)"
         default: ''
         required: false
-      go-version:
-        description: 'Go version to use if building needs to be done'
-        default: '1.24'
-        required: false
+
+env:
+  GO_VERSION: '1.25'
+  DOCKER_BUILDX_VERSION: 'v0.33.0'
 
 jobs:
   publish-provider-package:
-    uses: crossplane-contrib/provider-workflows/.github/workflows/publish-provider.yml@451c4dc6ad3691b0a702a997a0ac24e8bbc8bbaa # main
-    with:
-      repository: provider-cloudinaryprovisioning
-      # Use tag name when triggered by push, or explicit input when manual
-      version: ${{ github.ref_type == 'tag' && github.ref_name || github.event.inputs.version }}
-      go-version: ${{ github.event.inputs.go-version || '1.24' }}
-      cleanup-disk: true
-    secrets:
-      GHCR_PAT: ${{ secrets.GITHUB_TOKEN }}
-      XPKG_MIRROR_TOKEN: ${{ secrets.XPKG_MIRROR_TOKEN }}
-      XPKG_MIRROR_ACCESS_ID: ${{ secrets.XPKG_MIRROR_ACCESS_ID }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
+        with:
+          platforms: all
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+        with:
+          version: ${{ env.DOCKER_BUILDX_VERSION }}
+          install: true
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: true
+
+      - name: Fetch History
+        run: git fetch --prune --unshallow
+
+      - name: Setup Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Vendor Dependencies
+        run: make vendor vendor.check
+
+      - name: Build and publish
+        run: make -j2 build.all
+        env:
+          BUILD_ARGS: "--push"
+          VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.event.inputs.version }}
