@@ -88,7 +88,9 @@ jobs:
           up xpkg build \
             --package-root package \
             --output /tmp/provider-cloudinaryprovisioning.xpkg
-          up xpkg push /tmp/provider-cloudinaryprovisioning.xpkg \
-            "ghcr.io/nitrikx/provider-cloudinaryprovisioning:${{ steps.ver.outputs.version }}"
-          up xpkg push /tmp/provider-cloudinaryprovisioning.xpkg \
-            "ghcr.io/nitrikx/provider-cloudinaryprovisioning:latest"
+          up xpkg push \
+            "ghcr.io/nitrikx/provider-cloudinaryprovisioning:${{ steps.ver.outputs.version }}" \
+            -f /tmp/provider-cloudinaryprovisioning.xpkg
+          up xpkg push \
+            "ghcr.io/nitrikx/provider-cloudinaryprovisioning:latest" \
+            -f /tmp/provider-cloudinaryprovisioning.xpkg
