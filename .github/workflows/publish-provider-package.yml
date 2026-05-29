@@ -1,6 +1,10 @@
 name: Publish Provider Package
 
 on:
+  # Auto-publish when a version tag is pushed (e.g. via tag.yaml workflow)
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       version:
@@ -17,8 +21,9 @@ jobs:
     uses: crossplane-contrib/provider-workflows/.github/workflows/publish-provider.yml@451c4dc6ad3691b0a702a997a0ac24e8bbc8bbaa # main
     with:
       repository: provider-cloudinaryprovisioning
-      version: ${{ github.event.inputs.version }}
-      go-version: ${{ github.event.inputs.go-version }}
+      # Use tag name when triggered by push, or explicit input when manual
+      version: ${{ github.ref_type == 'tag' && github.ref_name || github.event.inputs.version }}
+      go-version: ${{ github.event.inputs.go-version || '1.24' }}
       cleanup-disk: true
     secrets:
       GHCR_PAT: ${{ secrets.GITHUB_TOKEN }}

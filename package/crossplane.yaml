@@ -2,6 +2,25 @@ apiVersion: meta.pkg.crossplane.io/v1
 kind: Provider
 metadata:
   name: provider-cloudinaryprovisioning
+  annotations:
+    meta.crossplane.io/maintainer: NitriKx <benoit.sauvere@backmarket.com>
+    meta.crossplane.io/source: github.com/NitriKx/provider-cloudinary-provisioning
+    meta.crossplane.io/license: Apache-2.0
+    meta.crossplane.io/description: |
+      Crossplane provider for Cloudinary Provisioning API. Manages API access keys,
+      custom policies, and role assignments at the Cloudinary account level.
+    meta.crossplane.io/readme: |
+      # provider-cloudinary-provisioning
+
+      Manages Cloudinary account-level resources (access keys, custom policies,
+      role assignments) via the Cloudinary Provisioning API.
+      See the [README](https://github.com/NitriKx/provider-cloudinary-provisioning)
+      for setup instructions and examples.
+    meta.crossplane.io/iconData: PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiNGNTgyMUUiLz4KICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNMzIgMTRjLTcuMiAwLTEzLjIgNS4xLTE0LjcgMTEuOUMxMi41IDI2LjYgOSAzMC41IDkgMzUuMyA5IDQxLjIgMTMuOCA0NiAxOS43IDQ2SDQ0YzUuNSAwIDEwLTQuNSAxMC0xMCAwLTUuMi0zLjktOS41LTguOS0xMC4xQzQzLjggMTkuNSAzOC40IDE0IDMyIDE0em0wIDRjNC44IDAgOC44IDMuNSA5LjYgOC4xbC40IDIuMSAyLjEuMmMzLjMuMyA1LjkgMy4xIDUuOSA2LjYgMCAzLjYtMi45IDYuNS02LjUgNi41SDE5LjdjLTMuNiAwLTYuNS0yLjktNi41LTYuNSAwLTMuMiAyLjQtNS45IDUuNS02LjRsMS45LS4zLjMtMS45QzIxLjcgMjIuMyAyNi40IDE4IDMyIDE4eiIvPgo8L3N2Zz4K
 spec:
+  crossplane:
+    version: ">=v1.14.0-0"
+  controller:
+    image: ghcr.io/nitrikx/provider-cloudinary-provisioning:latest
   capabilities:
     - SafeStart

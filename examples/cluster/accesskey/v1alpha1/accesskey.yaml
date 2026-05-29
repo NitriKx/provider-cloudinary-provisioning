@@ -1,0 +1,18 @@
+apiVersion: accesskey.cloudinaryprovisioning.crossplane.io/v1alpha1
+kind: AccessKey
+metadata:
+  name: example-access-key
+spec:
+  forProvider:
+    # The product environment (sub-account) this key will belong to.
+    # Replace with your actual product environment ID.
+    productEnvironmentId: "YOUR_PRODUCT_ENVIRONMENT_ID"
+    name: example-crossplane-key
+    enabled: true
+  # The generated api_key and api_secret connection details are written to this Secret.
+  # Applications consume this Secret as Cloudinary Admin API credentials.
+  writeConnectionSecretToRef:
+    namespace: default
+    name: example-cloudinary-creds
+  providerConfigRef:
+    name: default

@@ -121,13 +121,57 @@ $(TERRAFORM): check-terraform-version
 	@rm -fr $(TOOLS_HOST_DIR)/tmp-terraform
 	@$(OK) installing terraform $(HOSTOS)-$(HOSTARCH)
 
-$(TERRAFORM_PROVIDER_SCHEMA): $(TERRAFORM)
-	@$(INFO) generating provider schema for $(TERRAFORM_PROVIDER_SOURCE) $(TERRAFORM_PROVIDER_VERSION)
-	@mkdir -p $(TERRAFORM_WORKDIR)
-	@echo '{"terraform":[{"required_providers":[{"provider":{"source":"'"$(TERRAFORM_PROVIDER_SOURCE)"'","version":"'"$(TERRAFORM_PROVIDER_VERSION)"'"}}],"required_version":"'"$(TERRAFORM_VERSION)"'"}]}' > $(TERRAFORM_WORKDIR)/main.tf.json
-	@$(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) init > $(TERRAFORM_WORKDIR)/terraform-logs.txt 2>&1
-	@$(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) providers schema -json=true > $(TERRAFORM_PROVIDER_SCHEMA) 2>> $(TERRAFORM_WORKDIR)/terraform-logs.txt
-	@$(OK) generating provider schema for $(TERRAFORM_PROVIDER_SOURCE) $(TERRAFORM_PROVIDER_VERSION)
+# ----------------------------------------------------------
+# generate: remote flow
+#   Downloads the TF provider binary from GitHub Releases, generates schema.json
+#   using terraform dev_overrides (no registry lookup), then runs the Upjet generator.
+#   Requires a published GitHub Release at v$(TERRAFORM_PROVIDER_VERSION).
+# ----------------------------------------------------------
+generate: generate-schema generate-code
+
+generate-schema: $(TERRAFORM) pull-docs
+	@$(INFO) downloading $(TERRAFORM_PROVIDER_DOWNLOAD_NAME) v$(TERRAFORM_PROVIDER_VERSION) from GitHub Releases
+	@mkdir -p $(TERRAFORM_WORKDIR)/bin-remote
+	@curl -fsSL "$(TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX)/$(TERRAFORM_PROVIDER_DOWNLOAD_NAME)_$(TERRAFORM_PROVIDER_VERSION)_$(SAFEHOST_PLATFORM).zip" \
+		-o $(TERRAFORM_WORKDIR)/bin-remote/provider.zip
+	@unzip -oq $(TERRAFORM_WORKDIR)/bin-remote/provider.zip -d $(TERRAFORM_WORKDIR)/bin-remote/
+	@printf 'provider_installation {\n  dev_overrides {\n    "%s" = "%s"\n  }\n  direct {}\n}\n' \
+		"$(TERRAFORM_PROVIDER_SOURCE)" "$(abspath $(TERRAFORM_WORKDIR)/bin-remote)" > $(TERRAFORM_WORKDIR)/.terraformrc-remote
+	@echo '{"terraform":[{"required_providers":[{"provider":{"source":"$(TERRAFORM_PROVIDER_SOURCE)"}}]}]}' \
+		> $(TERRAFORM_WORKDIR)/main.tf.json
+	@TF_CLI_CONFIG_FILE=$(abspath $(TERRAFORM_WORKDIR)/.terraformrc-remote) \
+		$(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) providers schema -json=true \
+		> $(TERRAFORM_PROVIDER_SCHEMA) 2>/dev/null
+	@$(OK) schema generated from remote binary
+
+# ----------------------------------------------------------
+# generate-local: local dev flow
+#   Builds the TF provider from the sibling directory, generates schema.json
+#   using terraform dev_overrides, then runs the Upjet generator.
+#   Use this when iterating on both the TF provider and the Crossplane provider.
+# ----------------------------------------------------------
+generate-local: generate-schema-local generate-code
+
+generate-schema-local: $(TERRAFORM) pull-docs
+	@$(INFO) building $(TERRAFORM_PROVIDER_DOWNLOAD_NAME) from ../$(TERRAFORM_PROVIDER_DOWNLOAD_NAME)
+	@mkdir -p $(TERRAFORM_WORKDIR)/bin-local
+	@cd ../$(TERRAFORM_PROVIDER_DOWNLOAD_NAME) && go build \
+		-o "$(abspath $(TERRAFORM_WORKDIR)/bin-local)/$(TERRAFORM_PROVIDER_DOWNLOAD_NAME)_v$(TERRAFORM_PROVIDER_VERSION)" .
+	@printf 'provider_installation {\n  dev_overrides {\n    "%s" = "%s"\n  }\n  direct {}\n}\n' \
+		"$(TERRAFORM_PROVIDER_SOURCE)" "$(abspath $(TERRAFORM_WORKDIR)/bin-local)" > $(TERRAFORM_WORKDIR)/.terraformrc-local
+	@echo '{"terraform":[{"required_providers":[{"provider":{"source":"$(TERRAFORM_PROVIDER_SOURCE)"}}]}]}' \
+		> $(TERRAFORM_WORKDIR)/main.tf.json
+	@TF_CLI_CONFIG_FILE=$(abspath $(TERRAFORM_WORKDIR)/.terraformrc-local) \
+		$(TERRAFORM) -chdir=$(TERRAFORM_WORKDIR) providers schema -json=true \
+		> $(TERRAFORM_PROVIDER_SCHEMA) 2>/dev/null
+	@$(OK) schema generated from local binary
+
+# generate-code: runs the Upjet Go generator using the current schema.json + docs.
+generate-code:
+	@$(INFO) running upjet generator
+	@go run cmd/generator/main.go "$$(pwd)"
+	@go mod tidy
+	@$(OK) code generation complete
 
 pull-docs:
 	@mkdir -p "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)/docs"
@@ -135,9 +179,12 @@ pull-docs:
 		cp -r "../terraform-provider-cloudinary-provisioning/$(TERRAFORM_DOCS_PATH)" "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)/$(TERRAFORM_DOCS_PATH)"; \
 	fi
 
-generate.init: $(TERRAFORM_PROVIDER_SCHEMA) pull-docs
+# Legacy hook used by the build submodule's generate target.
+# With our new generate/generate-local targets, generate.init is a no-op
+# since schema.json is committed and only regenerated explicitly.
+generate.init: pull-docs
 
-.PHONY: pull-docs check-terraform-version
+.PHONY: generate generate-schema generate-local generate-schema-local generate-code pull-docs check-terraform-version
 # ====================================================================================
 # Targets
 

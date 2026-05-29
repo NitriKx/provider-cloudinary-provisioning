@@ -1,0 +1,21 @@
+apiVersion: policy.cloudinaryprovisioning.crossplane.io/v1alpha1
+kind: CustomPolicy
+metadata:
+  name: example-upload-policy
+spec:
+  forProvider:
+    name: example-upload-policy
+    enabled: true
+    # Scope type: "account" (whole account) or "prodenv" (single product environment)
+    scopeType: prodenv
+    # Required when scopeType is "prodenv". Replace with your product environment ID.
+    scopeId: "YOUR_PRODUCT_ENVIRONMENT_ID"
+    # Cedar policy statement granting upload and read access on all assets.
+    policyStatement: |
+      permit(
+        principal,
+        action in [Cloudinary::Action::"upload", Cloudinary::Action::"read"],
+        resource is Cloudinary::Asset
+      );
+  providerConfigRef:
+    name: default

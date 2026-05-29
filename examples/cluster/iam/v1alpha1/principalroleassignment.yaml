@@ -1,0 +1,19 @@
+apiVersion: iam.cloudinaryprovisioning.crossplane.io/v1alpha1
+kind: PrincipalRoleAssignment
+metadata:
+  name: example-role-assignment
+spec:
+  forProvider:
+    # Type of principal: "apiKey", "user", "group", or "provisioningKey"
+    principalType: apiKey
+    # ID of the principal (e.g. the api_key value of an AccessKey)
+    principalId: "YOUR_API_KEY"
+    # Role to assign. Obtain role IDs via the cloudinaryprovisioning_role data source
+    # or the Cloudinary console.
+    roleId: "YOUR_ROLE_ID"
+    # Scope type: "account" or "prodenv"
+    scopeType: prodenv
+    # Required when scopeType is "prodenv". Replace with your product environment ID.
+    scopeId: "YOUR_PRODUCT_ENVIRONMENT_ID"
+  providerConfigRef:
+    name: default
