@@ -122,11 +122,13 @@ $(TERRAFORM): check-terraform-version
 	@$(OK) installing terraform $(HOSTOS)-$(HOSTARCH)
 
 # ----------------------------------------------------------
-# generate: default target — re-runs the Upjet code generator against the
-#   committed config/schema.json. This is what CI (check-diff) calls.
-#   Does NOT re-fetch the schema from any external source.
+# generate: called by the build submodule's check-diff. We intentionally
+#   leave this empty so that check-diff only invokes go.generate (i.e.,
+#   `go generate ./...` via apis/generate.go) which runs the full pipeline
+#   against the committed docs/resources directory. This avoids running the
+#   generator twice and avoids pulling any external resources in CI.
 # ----------------------------------------------------------
-generate: generate-code
+generate:
 
 # ----------------------------------------------------------
 # generate-remote: downloads the TF provider binary from GitHub Releases,
