@@ -2,45 +2,26 @@ name: Publish Provider Package
 
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       version:
         description: "Version tag to publish (e.g. v0.1.0)"
-        default: ''
         required: false
+        default: ''
 
 env:
   GO_VERSION: '1.25'
-  DOCKER_BUILDX_VERSION: 'v0.33.0'
+  MODULE: github.com/NitriKx/provider-cloudinaryprovisioning
 
 jobs:
-  publish-provider-package:
+  publish:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
 
     steps:
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
-        with:
-          platforms: all
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
-        with:
-          version: ${{ env.DOCKER_BUILDX_VERSION }}
-          install: true
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -54,11 +35,60 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Vendor Dependencies
-        run: make vendor vendor.check
+      - name: Resolve version
+        id: ver
+        run: |
+          V="${{ github.event.inputs.version }}"
+          [ -z "$V" ] && V="${GITHUB_REF_NAME}"
+          echo "version=${V}" >> "$GITHUB_OUTPUT"
 
-      - name: Build and publish
-        run: make -j2 build.all
-        env:
-          BUILD_ARGS: "--push"
-          VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.event.inputs.version }}
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
+        with:
+          platforms: all
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Go binaries
+        run: |
+          mkdir -p bin/linux_amd64 bin/linux_arm64
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+            -ldflags="-X ${{ env.MODULE }}/internal/version.Version=${{ steps.ver.outputs.version }}" \
+            -o bin/linux_amd64/provider ./cmd/provider/
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build \
+            -ldflags="-X ${{ env.MODULE }}/internal/version.Version=${{ steps.ver.outputs.version }}" \
+            -o bin/linux_arm64/provider ./cmd/provider/
+
+      - name: Build and push controller image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: cluster/images/provider-cloudinaryprovisioning/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/nitrikx/provider-cloudinaryprovisioning-controller:${{ steps.ver.outputs.version }}
+            ghcr.io/nitrikx/provider-cloudinaryprovisioning-controller:latest
+
+      - name: Install up CLI
+        run: |
+          curl -fsSL "https://cli.upbound.io" | sh
+          sudo mv up /usr/local/bin/
+
+      - name: Build and push xpkg
+        run: |
+          up xpkg build \
+            --package-root package \
+            --output /tmp/provider-cloudinaryprovisioning.xpkg
+          up xpkg push /tmp/provider-cloudinaryprovisioning.xpkg \
+            "ghcr.io/nitrikx/provider-cloudinaryprovisioning:${{ steps.ver.outputs.version }}"
+          up xpkg push /tmp/provider-cloudinaryprovisioning.xpkg \
+            "ghcr.io/nitrikx/provider-cloudinaryprovisioning:latest"

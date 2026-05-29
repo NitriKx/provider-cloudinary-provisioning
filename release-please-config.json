@@ -14,6 +14,10 @@
     {
       "type": "generic",
       "path": "internal/version/version.go"
+    },
+    {
+      "type": "generic",
+      "path": "package/crossplane.yaml"
     }
   ]
 }
