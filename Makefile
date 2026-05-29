@@ -182,10 +182,9 @@ generate-code:
 	@$(OK) code generation complete
 
 pull-docs:
-	@mkdir -p "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)/docs"
-	@if [ ! -d "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)/$(TERRAFORM_DOCS_PATH)" ] && \
-	   [ -d "../terraform-provider-cloudinary-provisioning/$(TERRAFORM_DOCS_PATH)" ]; then \
-		cp -r "../terraform-provider-cloudinary-provisioning/$(TERRAFORM_DOCS_PATH)" "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)/$(TERRAFORM_DOCS_PATH)"; \
+	@mkdir -p "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)/$(TERRAFORM_DOCS_PATH)"
+	@if [ -d "../terraform-provider-cloudinary-provisioning/$(TERRAFORM_DOCS_PATH)" ]; then \
+		cp -r "../terraform-provider-cloudinary-provisioning/$(TERRAFORM_DOCS_PATH)/." "$(WORK_DIR)/$(TERRAFORM_PROVIDER_SOURCE)/$(TERRAFORM_DOCS_PATH)/"; \
 	fi
 
 # Legacy hook used by the build submodule's generate target.
