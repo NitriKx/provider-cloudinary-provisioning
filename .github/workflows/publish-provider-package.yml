@@ -67,6 +67,9 @@ jobs:
             -ldflags="-X ${{ env.MODULE }}/internal/version.Version=${{ steps.ver.outputs.version }}" \
             -o bin/linux_arm64/provider ./cmd/provider/
 
+      - name: Prepare controller image build context
+        run: cp cluster/images/provider-cloudinaryprovisioning/terraformrc.hcl ./
+
       - name: Build and push controller image
         uses: docker/build-push-action@v6
         with:
