@@ -87,6 +87,7 @@ jobs:
         run: |
           up xpkg build \
             --package-root package \
+            --controller-image "ghcr.io/nitrikx/provider-cloudinaryprovisioning-controller:${{ steps.ver.outputs.version }}" \
             --output /tmp/provider-cloudinaryprovisioning.xpkg
           up xpkg push \
             "ghcr.io/nitrikx/provider-cloudinaryprovisioning:${{ steps.ver.outputs.version }}" \
