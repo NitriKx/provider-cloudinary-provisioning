@@ -86,6 +86,9 @@ jobs:
           curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh
           sudo mv crossplane /usr/local/bin/
 
+      - name: Pull controller image for local embedding
+        run: docker pull "ghcr.io/nitrikx/provider-cloudinaryprovisioning-controller:${{ steps.ver.outputs.version }}"
+
       - name: Build and push provider package (runtime embedded)
         run: |
           crossplane xpkg build \
