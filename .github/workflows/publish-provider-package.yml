@@ -81,20 +81,20 @@ jobs:
             ghcr.io/nitrikx/provider-cloudinaryprovisioning-controller:${{ steps.ver.outputs.version }}
             ghcr.io/nitrikx/provider-cloudinaryprovisioning-controller:latest
 
-      - name: Install up CLI
+      - name: Install crossplane CLI
         run: |
-          curl -fsSL "https://cli.upbound.io" | sh
-          sudo mv up /usr/local/bin/
+          curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh
+          sudo mv crossplane /usr/local/bin/
 
-      - name: Build and push xpkg
+      - name: Build and push provider package (runtime embedded)
         run: |
-          up xpkg build \
+          crossplane xpkg build \
             --package-root package \
-            --controller-image "ghcr.io/nitrikx/provider-cloudinaryprovisioning-controller:${{ steps.ver.outputs.version }}" \
-            --output /tmp/provider-cloudinaryprovisioning.xpkg
-          up xpkg push \
-            "ghcr.io/nitrikx/provider-cloudinaryprovisioning:${{ steps.ver.outputs.version }}" \
-            -f /tmp/provider-cloudinaryprovisioning.xpkg
-          up xpkg push \
-            "ghcr.io/nitrikx/provider-cloudinaryprovisioning:latest" \
-            -f /tmp/provider-cloudinaryprovisioning.xpkg
+            --embed-runtime-image "ghcr.io/nitrikx/provider-cloudinaryprovisioning-controller:${{ steps.ver.outputs.version }}" \
+            --package-file /tmp/provider-cloudinaryprovisioning.xpkg
+          crossplane xpkg push \
+            --package-files /tmp/provider-cloudinaryprovisioning.xpkg \
+            "ghcr.io/nitrikx/provider-cloudinaryprovisioning:${{ steps.ver.outputs.version }}"
+          crossplane xpkg push \
+            --package-files /tmp/provider-cloudinaryprovisioning.xpkg \
+            "ghcr.io/nitrikx/provider-cloudinaryprovisioning:latest"
