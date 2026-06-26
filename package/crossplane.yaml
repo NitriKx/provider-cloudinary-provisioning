@@ -21,6 +21,6 @@ spec:
   crossplane:
     version: ">=v1.14.0-0"
   controller:
-    image: ghcr.io/nitrikx/provider-cloudinaryprovisioning-controller:v0.1.1 # x-release-please-version
+    image: ghcr.io/nitrikx/provider-cloudinaryprovisioning-controller:v0.1.2 # x-release-please-version
   capabilities:
     - SafeStart
