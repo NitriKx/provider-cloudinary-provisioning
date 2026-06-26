@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/NitriKx/provider-cloudinary-provisioning/compare/v0.1.2...v0.1.3) (2026-06-26)
+
+
+### Bug Fixes
+
+* **ci:** [INFRA-6551] pull controller image before xpkg embedding ([48273b9](https://github.com/NitriKx/provider-cloudinary-provisioning/commit/48273b9f48e0d6d08cb327a9be4383780bb07287))
+
 ## [0.1.2](https://github.com/NitriKx/provider-cloudinary-provisioning/compare/v0.1.1...v0.1.2) (2026-06-26)
 
 
