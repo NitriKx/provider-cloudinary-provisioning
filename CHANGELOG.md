@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/NitriKx/provider-cloudinary-provisioning/compare/v0.1.3...v0.1.4) (2026-07-28)
+
+
+### Bug Fixes
+
+* track terraform-provider-cloudinary-provisioning v0.1.2 ([#5](https://github.com/NitriKx/provider-cloudinary-provisioning/issues/5)) ([138bfdd](https://github.com/NitriKx/provider-cloudinary-provisioning/commit/138bfdd0d23fe6148bd6c95dcd1b47099dd27781))
+
 ## [0.1.3](https://github.com/NitriKx/provider-cloudinary-provisioning/compare/v0.1.2...v0.1.3) (2026-07-28)
 
 
