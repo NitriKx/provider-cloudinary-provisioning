@@ -13,6 +13,7 @@ import (
 
 	clusterv1beta1 "github.com/NitriKx/provider-cloudinaryprovisioning/apis/cluster/v1beta1"
 	namespacedv1beta1 "github.com/NitriKx/provider-cloudinaryprovisioning/apis/namespaced/v1beta1"
+	"github.com/NitriKx/provider-cloudinaryprovisioning/config"
 )
 
 const (
@@ -24,17 +25,33 @@ const (
 	errUnmarshalCredentials = "cannot unmarshal cloudinaryprovisioning credentials as JSON"
 )
 
+// providerRequirement describes the Terraform provider that the generated
+// workspaces depend on.
+//
+// The Terraform provider is published as nitrikx/cloudinary-provisioning, so
+// upjet would default the local name to the last path segment,
+// "cloudinary-provisioning". Resource types are prefixed
+// "cloudinaryprovisioning_", and Terraform resolves a resource's provider from
+// that prefix, so it would look for an undeclared "cloudinaryprovisioning"
+// provider and fall back to registry.terraform.io/hashicorp/cloudinaryprovisioning,
+// failing terraform init. Pinning the local name to the resource prefix keeps
+// the required_providers block and the resource types aligned.
+func providerRequirement(providerSource, providerVersion string) terraform.ProviderRequirement {
+	return terraform.ProviderRequirement{
+		Source:    providerSource,
+		Version:   providerVersion,
+		LocalName: config.ResourcePrefix,
+	}
+}
+
 // TerraformSetupBuilder builds Terraform a terraform.SetupFn function which
 // returns Terraform provider setup configuration
 func TerraformSetupBuilder(version, providerSource, providerVersion string, scheduler terraform.ProviderScheduler) terraform.SetupFn {
 	return func(ctx context.Context, client client.Client, mg resource.Managed) (terraform.Setup, error) {
 		ps := terraform.Setup{
-			Version: version,
-			Requirement: terraform.ProviderRequirement{
-				Source:  providerSource,
-				Version: providerVersion,
-			},
-			Scheduler: scheduler,
+			Version:     version,
+			Requirement: providerRequirement(providerSource, providerVersion),
+			Scheduler:   scheduler,
 		}
 
 		pcSpec, err := resolveProviderConfig(ctx, client, mg)

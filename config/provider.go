@@ -19,6 +19,12 @@ const (
 	modulePath     = "github.com/NitriKx/provider-cloudinaryprovisioning"
 )
 
+// ResourcePrefix is the prefix shared by every Terraform resource type of the
+// underlying provider (e.g. cloudinaryprovisioning_access_key). Terraform
+// resolves a resource to a provider through this prefix, so it must also be
+// used as the provider's local name in the generated required_providers block.
+const ResourcePrefix = resourcePrefix
+
 //go:embed schema.json
 var providerSchema string
 
